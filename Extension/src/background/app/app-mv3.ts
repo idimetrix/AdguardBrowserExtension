@@ -28,7 +28,7 @@ import {
     ForwardAction,
     ForwardFrom,
 } from '../../common/forward';
-import { CLIENT_ID_KEY } from '../../common/constants';
+import { CLIENT_ID_KEY, EXTENSION_INITIALIZED_EVENT } from '../../common/constants';
 import { messageHandler } from '../message-handler';
 import { ConnectionHandler } from '../connection-handler';
 import {
@@ -291,6 +291,11 @@ export class App {
         filterUpdateService.init();
 
         await sendMessage({ type: MessageType.AppInitialized });
+
+        // this method is used for integration tests (scripts/browser-test/index.ts)
+        // and waitUntilExtensionInitialized() is adding a listener to the event
+        // so the event should be dispatched eventually
+        dispatchEvent(new Event(EXTENSION_INITIALIZED_EVENT));
     }
 
     /**

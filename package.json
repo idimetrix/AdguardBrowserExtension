@@ -20,7 +20,8 @@
     "check-types": "tsc --project tsconfig.with_types_mv2.json --noEmit && tsc --project tsconfig.with_types_mv3.json --noEmit",
     "disclaimer": "yarn lint | node -r @swc-node/register tools/insert-disclaimer.js",
     "copy-external": "tswebextension war Extension/web-accessible-resources",
-    "convert-declarative": "node -r @swc-node/register tools/converter.ts"
+    "convert-declarative": "node -r @swc-node/register tools/converter.ts",
+    "integration-test": "rimraf tmp && node -r @swc-node/register tools/browser-test/index.ts"
   },
   "repository": {
     "type": "git",
@@ -80,9 +81,11 @@
     "husky": "^7.0.1",
     "jest": "^29.3.1",
     "jest-environment-jsdom": "^29.3.1",
+    "junit-report-builder": "^5.1.1",
     "lint-staged": "^13.1.2",
     "lodash": "^4.17.21",
     "openai": "^4.26.0",
+    "playwright": "^1.48.2",
     "postcss": "8.4.12",
     "postcss-loader": "6.1.1",
     "postcss-nested": "5.0.6",

@@ -33,12 +33,17 @@ Test:
             set -e
             ls -la
 
+            # Fix mixed logs
+            exec 2>&1
+
             # don't use --ignore-optional flag, because esbuild requires optional deps
             yarn install --silent --ignore-engines --ignore-platform --ignore-scripts
 
             yarn lint
             yarn test
             yarn dev
+
+            yarn integration-test dev
 
             # Create artifacts directory if it doesn't exist
             mkdir -p artifacts
@@ -51,6 +56,9 @@ Test:
             cp build/dev/firefox-amo.zip artifacts/
             cp build/dev/firefox-standalone.zip artifacts/
             cp build/dev/opera.zip artifacts/
+    - test-parser:
+        type: junit
+        test-results: '**/test-report.xml'
   final-tasks:
     - script:
         interpreter: SHELL

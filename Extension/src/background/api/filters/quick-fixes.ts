@@ -17,7 +17,7 @@
  */
 import { logger, PreprocessedFilterList } from '@adguard/tsurlfilter';
 
-import { AntiBannerFiltersId } from '../../../common/constants';
+import { AntiBannerFiltersId, emptyPreprocessedFilterList } from '../../../common/constants';
 import { FiltersStorage, filterStateStorage } from '../../storages';
 import { engine } from '../../engine';
 
@@ -105,12 +105,7 @@ export class QuickFixesRulesApi {
         const data = await FiltersStorage.getAllFilterData(AntiBannerFiltersId.QuickFixesFilterId);
 
         if (!data) {
-            return {
-                rawFilterList: '',
-                filterList: [],
-                sourceMap: {},
-                conversionMap: {},
-            };
+            return emptyPreprocessedFilterList;
         }
 
         return data;
