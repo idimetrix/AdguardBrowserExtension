@@ -15,6 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
+
+import {
+    splitRegexRule,
+    isValidRegexPattern,
+    regexValidatorExtension,
+} from '../utils/regex-rules';
 import {
     AddUserRuleMessage,
     MessageType,
@@ -34,6 +40,8 @@ import {
 } from '../api';
 import { settingsEvents } from '../events';
 import { Prefs } from '../prefs';
+import { logger } from '../../common/logger';
+import { NEWLINE_CHAR_UNIX } from '../../common/constants';
 
 export type GetUserRulesResponse = {
     content: string,
@@ -114,6 +122,47 @@ export class UserRulesService {
     }
 
     /**
+     * Validates user regex rules.
+     *
+     * @param rules User rules to validate.
+     */
+    private static async validateRegexRules(rules: string[]): Promise<void> {
+        if (!rules.length) {
+            return;
+        }
+        const rulesPatterns = rules.filter((pattern) => isValidRegexPattern(pattern));
+        const regexPatterns = rulesPatterns.map((pattern) => splitRegexRule(pattern)?.pattern);
+        await Promise.all(regexPatterns.map(async (regex) => {
+            try {
+                const result = await regexValidatorExtension(regex);
+                if (!result.isSupported) {
+                    throw new Error(result.reason);
+                }
+            } catch (e) {
+                if (e instanceof Error) {
+                    logger.error(`Regex is not supported: ${regex}, reason: ${e.message}`);
+                }
+            }
+        }));
+    }
+
+    /**
+     * Validates regex rule.
+     *
+     * @param regex Regex to validate.
+     */
+    private static async validateRegexRule(regex: string): Promise<void> {
+        if (!isValidRegexPattern(regex)) {
+            return;
+        }
+        const pattern = splitRegexRule(regex)?.pattern;
+        const result = await regexValidatorExtension(pattern);
+        if (!result.isSupported) {
+            logger.error(`Regex is not supported: ${regex}, reason: ${result.reason}`);
+        }
+    }
+
+    /**
      * Saves new rules and updates the engine.
      *
      * @param message Message of type {@link SaveUserRulesMessage} with new user rules.
@@ -121,7 +170,9 @@ export class UserRulesService {
     private static async handleUserRulesSave(message: SaveUserRulesMessage): Promise<void> {
         const { value } = message.data;
 
-        await UserRulesApi.setUserRules(value.split('\n'));
+        const rules = value.split(NEWLINE_CHAR_UNIX);
+        await UserRulesService.validateRegexRules(rules);
+        await UserRulesApi.setUserRules(rules);
 
         // update the engine only if the module is enabled
         if (UserRulesApi.isEnabled()) {
@@ -137,6 +188,7 @@ export class UserRulesService {
     private static async handleUserRuleAdd(message: AddUserRuleMessage): Promise<void> {
         const { ruleText } = message.data;
 
+        await UserRulesService.validateRegexRule(ruleText);
         await UserRulesApi.addUserRule(ruleText);
 
         // update the engine only if the module is enabled
