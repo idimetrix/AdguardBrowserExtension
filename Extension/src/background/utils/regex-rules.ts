@@ -16,17 +16,6 @@
 import { splitByDelimiterWithEscapeCharacter } from '@adguard/tsurlfilter';
 
 /**
- * Represents the result of regex validation.
- * @interface
- */
-interface RegexValidationResult {
-    /** Whether the regex is supported by the RE2 engine. */
-    isSupported: boolean;
-    /** The reason why the regex is not supported (only present when isSupported is false). */
-    reason?: string;
-}
-
-/**
  * Validates if a regular expression is supported by Chrome's declarativeNetRequest API,
  * which uses the RE2 regex engine.
  *
@@ -46,19 +35,19 @@ interface RegexValidationResult {
  *   console.error("API not available:", error);
  * }
  */
-const regexValidatorExtension = async (regexFilter: string): Promise<RegexValidationResult> => {
-    if (typeof chrome === 'undefined' || !chrome.declarativeNetRequest) {
-        throw new Error('chrome.declarativeNetRequest is not available');
-    }
+const regexValidatorExtension = (regexFilter: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        if (typeof chrome === 'undefined' || !chrome.declarativeNetRequest) {
+            reject(new Error('chrome.declarativeNetRequest is not available'));
+        }
 
-    const regexOptions: chrome.declarativeNetRequest.RegexOptions = { regex: regexFilter };
-
-    return new Promise((resolve) => {
+        const regexOptions: chrome.declarativeNetRequest.RegexOptions = { regex: regexFilter };
         chrome.declarativeNetRequest.isRegexSupported(regexOptions, (result) => {
-            resolve({
-                isSupported: result.isSupported,
-                reason: result.isSupported ? undefined : result.reason,
-            });
+            if (result.isSupported) {
+                resolve(undefined);
+            } else {
+                reject(new Error(`Regex is not supported: ${regexFilter}, reason: ${result.reason}`));
+            }
         });
     });
 };

@@ -134,13 +134,10 @@ export class UserRulesService {
         const regexPatterns = rulesPatterns.map((pattern) => splitRegexRule(pattern)?.pattern);
         await Promise.all(regexPatterns.map(async (regex) => {
             try {
-                const result = await regexValidatorExtension(regex);
-                if (!result.isSupported) {
-                    throw new Error(result.reason);
-                }
+                await regexValidatorExtension(regex);
             } catch (e) {
                 if (e instanceof Error) {
-                    logger.error(`Regex is not supported: ${regex}, reason: ${e.message}`);
+                    logger.error(e.message);
                 }
             }
         }));
@@ -156,9 +153,12 @@ export class UserRulesService {
             return;
         }
         const pattern = splitRegexRule(regex)?.pattern;
-        const result = await regexValidatorExtension(pattern);
-        if (!result.isSupported) {
-            logger.error(`Regex is not supported: ${regex}, reason: ${result.reason}`);
+        try {
+            await regexValidatorExtension(pattern);
+        } catch (e) {
+            if (e instanceof Error) {
+                logger.error(e.message);
+            }
         }
     }
 
