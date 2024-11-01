@@ -44,7 +44,7 @@ const regexValidatorExtension = (regexFilter: string): Promise<void> => {
         const regexOptions: chrome.declarativeNetRequest.RegexOptions = { regex: regexFilter };
         chrome.declarativeNetRequest.isRegexSupported(regexOptions, (result) => {
             if (result.isSupported) {
-                resolve(undefined);
+                resolve();
             } else {
                 reject(new Error(`Regex is not supported: ${regexFilter}, reason: ${result.reason}`));
             }
